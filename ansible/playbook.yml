@@ -1,2 +1,15 @@
-[webserver]
-localhost ansible_connection=docker ansible_docker_container=web-server
+- name: Deploy to Web Server
+  hosts: web
+  become: true
+
+  tasks:
+    - name: Pull latest code
+      git:
+        repo: https://github.com/Houysang/DevOp_Final-Exam.git
+        dest: /app
+        force: yes
+
+    - name: Build application
+      shell: mvn clean package -DskipTests
+      args:
+        chdir: /app
