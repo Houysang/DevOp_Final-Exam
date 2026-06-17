@@ -12,7 +12,7 @@ services:
     command: >
       bash -c "
       apt update &&
-      apt install -y git openssh-server wget php php-cli &&
+      apt install -y git openssh-server wget &&
       mkdir /var/run/sshd &&
       echo 'root:#San#5552' | chpasswd &&
       /usr/sbin/sshd &&
@@ -45,4 +45,4 @@ services:
       MYSQL_DATABASE: A-GUOV_Houysang-db
 
     ports:
-      - "3309:8082"
+      - "3309:3306"
