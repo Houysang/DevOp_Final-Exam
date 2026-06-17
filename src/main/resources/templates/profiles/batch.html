@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch Create - ID Card Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; }
+        .sidebar { min-height: 100vh; background: linear-gradient(180deg, #2c3e50 0%, #3498db 100%); }
+        .sidebar .nav-link { color: rgba(255,255,255,.8); padding: .75rem 1rem; border-radius: .25rem; margin: .2rem .5rem; }
+        .sidebar .nav-link:hover { color: #fff; background: rgba(255,255,255,.1); }
+        .sidebar .nav-link i { margin-right: .5rem; }
+        .entry-row { background: #f8f9fa; border-radius: .5rem; padding: 1rem; margin-bottom: .5rem; border: 1px solid #dee2e6; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 sidebar p-3">
+            <div class="text-white text-center mb-3">
+                <i class="bi bi-credit-card-2-front" style="font-size: 2rem;"></i>
+                <h5 class="mt-2">ID Card Mgmt</h5>
+                <hr class="bg-light">
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link" th:href="@{/api/profiles/view/all}"><i class="bi bi-people"></i> All Profiles</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/api/profiles/view/create}"><i class="bi bi-person-plus"></i> Create Profile</a></li>
+                <li class="nav-item"><a class="nav-link active" th:href="@{/api/profiles/view/batch}"><i class="bi bi-files"></i> Batch Create</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/api/templates/view/all}"><i class="bi bi-layout-text-window"></i> Templates</a></li>
+            </ul>
+        </div>
+        <div class="col-md-10 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-files"></i> Batch Create Profiles</h2>
+                <a th:href="@{/api/profiles/view/all}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+            </div>
+
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <h5>Enter Profile Details</h5>
+                    <div>
+                        <button class="btn btn-success btn-sm" onclick="addEntry()"><i class="bi bi-plus"></i> Add Entry</button>
+                        <button class="btn btn-primary btn-sm" onclick="submitBatch()"><i class="bi bi-send"></i> Create All</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form id="batchForm">
+                        <div id="entriesContainer">
+                            <!-- Entry row template -->
+                            <div class="entry-row" id="entry-0">
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <input type="text" class="form-control form-control-sm" placeholder="First Name *" name="entries[0].firstName" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="text" class="form-control form-control-sm" placeholder="Last Name *" name="entries[0].lastName" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select class="form-select form-select-sm" name="entries[0].profileType" required>
+                                            <option value="">Type...</option>
+                                            <option th:each="type : ${profileTypes}" th:value="${type}" th:text="${type}"></option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input type="text" class="form-control form-control-sm" placeholder="Department" name="entries[0].department">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input type="email" class="form-control form-control-sm" placeholder="Email" name="entries[0].email">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="mt-3">
+                        <h6>Or upload a JSON file:</h6>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="jsonFile" accept=".json">
+                            <button class="btn btn-outline-primary" onclick="loadFromJson()"><i class="bi bi-upload"></i> Load from JSON</button>
+                        </div>
+                        <small class="text-muted">JSON format: [{"firstName":"...","lastName":"...","profileType":"STUDENT","department":"..."}]</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let entryCount = 1;
+
+function addEntry() {
+    const container = document.getElementById('entriesContainer');
+    const template = document.querySelector('.entry-row').cloneNode(true);
+    template.id = 'entry-' + entryCount;
+    template.querySelectorAll('input, select').forEach(el => {
+        const name = el.getAttribute('name');
+        if (name) {
+            el.setAttribute('name', name.replace(/entries\[\d+\]/, 'entries[' + entryCount + ']'));
+            el.value = '';
+        }
+    });
+    container.appendChild(template);
+    entryCount++;
+}
+
+function submitBatch() {
+    const entries = [];
+    document.querySelectorAll('.entry-row').forEach(row => {
+        const firstName = row.querySelector('[name$=".firstName"]').value;
+        const lastName = row.querySelector('[name$=".lastName"]').value;
+        const profileType = row.querySelector('[name$=".profileType"]').value;
+        const department = row.querySelector('[name$=".department"]').value;
+        const email = row.querySelector('[name$=".email"]').value;
+
+        if (firstName && lastName && profileType) {
+            entries.push({ firstName, lastName, profileType, department, email });
+        }
+    });
+
+    if (entries.length === 0) {
+        alert('Please fill in at least one valid entry (firstName, lastName, profileType required)');
+        return;
+    }
+
+    fetch('/api/profiles/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entries)
+    })
+    .then(res => {
+        if (res.ok) {
+            alert('Successfully created ' + entries.length + ' profiles!');
+            window.location.href = '/api/profiles/view/all';
+        } else {
+            alert('Failed to create profiles');
+        }
+    })
+    .catch(err => alert('Error: ' + err));
+}
+
+function loadFromJson() {
+    const file = document.getElementById('jsonFile').files[0];
+    if (!file) { alert('Please select a JSON file'); return; }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (!Array.isArray(data)) { alert('JSON must be an array'); return; }
+
+            // Clear existing entries
+            const container = document.getElementById('entriesContainer');
+            container.innerHTML = '';
+
+            data.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'entry-row';
+                div.id = 'entry-' + index;
+                div.innerHTML = `
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <input type="text" class="form-control form-control-sm" placeholder="First Name *" name="entries[${index}].firstName" value="${item.firstName || ''}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" class="form-control form-control-sm" placeholder="Last Name *" name="entries[${index}].lastName" value="${item.lastName || ''}" required>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select form-select-sm" name="entries[${index}].profileType" required>
+                                <option value="">Type...</option>
+                                <option ${item.profileType === 'STUDENT' ? 'selected' : ''} value="STUDENT">STUDENT</option>
+                                <option ${item.profileType === 'EMPLOYEE' ? 'selected' : ''} value="EMPLOYEE">EMPLOYEE</option>
+                                <option ${item.profileType === 'USER' ? 'selected' : ''} value="USER">USER</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="text" class="form-control form-control-sm" placeholder="Department" name="entries[${index}].department" value="${item.department || ''}">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="email" class="form-control form-control-sm" placeholder="Email" name="entries[${index}].email" value="${item.email || ''}">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            entryCount = data.length;
+        } catch(e) {
+            alert('Invalid JSON: ' + e.message);
+        }
+    };
+    reader.readAsText(file);
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

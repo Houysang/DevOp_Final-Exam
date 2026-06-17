@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Templates - ID Card Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; }
+        .sidebar { min-height: 100vh; background: linear-gradient(180deg, #2c3e50 0%, #3498db 100%); }
+        .sidebar .nav-link { color: rgba(255,255,255,.8); padding: .75rem 1rem; border-radius: .25rem; margin: .2rem .5rem; }
+        .sidebar .nav-link:hover { color: #fff; background: rgba(255,255,255,.1); }
+        .sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,.2); }
+        .sidebar .nav-link i { margin-right: .5rem; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 sidebar p-3">
+            <div class="text-white text-center mb-3">
+                <i class="bi bi-credit-card-2-front" style="font-size: 2rem;"></i>
+                <h5 class="mt-2">ID Card Mgmt</h5>
+                <hr class="bg-light">
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link" th:href="@{/api/profiles/view/all}"><i class="bi bi-people"></i> All Profiles</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/api/profiles/view/create}"><i class="bi bi-person-plus"></i> Create Profile</a></li>
+                <li class="nav-item"><a class="nav-link active" th:href="@{/api/templates/view/all}"><i class="bi bi-layout-text-window"></i> Templates</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/api/templates/view/create}"><i class="bi bi-plus-square"></i> New Template</a></li>
+            </ul>
+        </div>
+        <div class="col-md-10 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-layout-text-window"></i> ID Card Templates</h2>
+                <a th:href="@{/api/templates/view/create}" class="btn btn-primary"><i class="bi bi-plus"></i> Create Template</a>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Type</th>
+                                    <th>Default</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="template : ${templates}">
+                                    <td th:text="${template.id}"></td>
+                                    <td th:text="${template.name}"></td>
+                                    <td th:text="${template.description} ?: 'N/A'"></td>
+                                    <td><span class="badge bg-secondary" th:text="${template.profileType} ?: 'All'"></span></td>
+                                    <td>
+                                        <span th:if="${template.isDefault}" class="badge bg-success">Default</span>
+                                        <span th:unless="${template.isDefault}" class="badge bg-light text-muted">No</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a th:href="@{/api/templates/view/edit/{id}(id=${template.id})}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                                            <a th:href="@{/api/templates/{id}/set-default(id=${template.id})}" class="btn btn-outline-success" title="Set as Default"><i class="bi bi-check-circle"></i></a>
+                                            <form th:action="@{/api/templates/view/delete/{id}(id=${template.id})}" method="post" style="display:inline;" onsubmit="return confirm('Delete this template?')">
+                                                <button class="btn btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

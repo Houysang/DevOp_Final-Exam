@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Preview - ID Card</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; }
+        .card-preview {
+            width: 350px;
+            height: 220px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            margin: 0 auto;
+        }
+        .card-preview .photo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #e94560;
+            float: right;
+        }
+        .card-preview .institution {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.8;
+        }
+        .card-preview .card-type {
+            font-size: 14px;
+            font-weight: bold;
+            color: #e94560;
+            margin-bottom: 5px;
+        }
+        .card-preview .name {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .card-preview .detail {
+            font-size: 11px;
+            opacity: 0.9;
+            margin: 2px 0;
+        }
+        .card-preview .detail-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            opacity: 0.6;
+        }
+        .card-preview .unique-id {
+            position: absolute;
+            bottom: 15px;
+            left: 20px;
+            font-size: 10px;
+            font-family: 'Courier New', monospace;
+            background: rgba(255,255,255,0.1);
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        .card-preview .qr-placeholder {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 4px;
+            padding: 3px;
+        }
+        .card-preview .barcode-placeholder {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 30px;
+            background: white;
+            border-radius: 2px;
+            opacity: 0;
+        }
+        .photo-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            float: right;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            border: 3px dashed rgba(255,255,255,0.3);
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .card-preview { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12 text-center mb-4">
+            <h2><i class="bi bi-card-image"></i> Live ID Card Preview</h2>
+            <p class="text-muted">This is a real-time preview of how the ID card will look</p>
+            <div class="no-print">
+                <a th:href="@{/api/profiles/view/{id}(id=${profileDTO.id})}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back to Profile</a>
+                <a th:href="@{/api/pdf/generate-with-qr/{id}(id=${profileDTO.id})}" class="btn btn-danger btn-sm"><i class="bi bi-filetype-pdf"></i> Download PDF</a>
+                <button class="btn btn-primary btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <!-- ID Card -->
+            <div class="card-preview" id="idCard">
+                <!-- Institution -->
+                <div class="institution">ID Card Management System</div>
+
+                <!-- Photo -->
+                <img th:if="${photo}" th:src="${photo}" class="photo" alt="Photo">
+                <div th:unless="${photo}" class="photo-placeholder">
+                    <i class="bi bi-person"></i>
+                </div>
+
+                <!-- Card Type -->
+                <div class="card-type" th:text="${profileDTO.profileType}"></div>
+
+                <!-- Full Name -->
+                <div class="name" th:text="${profileDTO.fullName}"></div>
+
+                <!-- Details -->
+                <div class="detail">
+                    <span class="detail-label">ID: </span>
+                    <span th:text="${profileDTO.uniqueId}"></span>
+                </div>
+                <div class="detail">
+                    <span class="detail-label">Dept: </span>
+                    <span th:text="${profileDTO.department} ?: 'N/A'"></span>
+                </div>
+                <div class="detail">
+                    <span class="detail-label">Position: </span>
+                    <span th:text="${profileDTO.position} ?: 'N/A'"></span>
+                </div>
+                <div class="detail">
+                    <span class="detail-label">DOB: </span>
+                    <span th:text="${profileDTO.dateOfBirth} ?: 'N/A'"></span>
+                </div>
+
+                <!-- Unique ID Badge -->
+                <div class="unique-id" th:text="${profileDTO.uniqueId}"></div>
+
+                <!-- QR Code Placeholder -->
+                <div class="qr-placeholder">
+                    <img th:src="@{/api/pdf/qr/{id}(id=${profileDTO.id})}" style="width: 100%; height: 100%;" alt="QR Code">
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 no-print">
+            <div class="card">
+                <div class="card-header"><h5>Profile Information</h5></div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless">
+                        <tr><th>Name</th><td th:text="${profileDTO.fullName}"></td></tr>
+                        <tr><th>ID</th><td th:text="${profileDTO.uniqueId}"></td></tr>
+                        <tr><th>Type</th><td th:text="${profileDTO.profileType}"></td></tr>
+                        <tr><th>Dept</th><td th:text="${profileDTO.department} ?: 'N/A'"></td></tr>
+                        <tr><th>Position</th><td th:text="${profileDTO.position} ?: 'N/A'"></td></tr>
+                        <tr><th>Email</th><td th:text="${profileDTO.email} ?: 'N/A'"></td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header"><h5>QR Code & Barcode</h5></div>
+                <div class="card-body text-center">
+                    <div class="row">
+                        <div class="col-6">
+                            <img th:src="@{/api/pdf/qr/{id}(id=${profileDTO.id})}" style="width: 100px; height: 100px;" alt="QR Code">
+                            <p class="small text-muted mt-1">QR Code</p>
+                        </div>
+                        <div class="col-6">
+                            <img th:src="@{/api/pdf/barcode/{id}(id=${profileDTO.id})}" style="width: 150px; height: 40px;" alt="Barcode">
+                            <p class="small text-muted mt-1">Barcode (Code 128)</p>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <a th:href="@{/api/pdf/qr/{id}(id=${profileDTO.id})}" class="btn btn-sm btn-outline-info" target="_blank">View QR Code</a>
+                        <a th:href="@{/api/pdf/barcode/{id}(id=${profileDTO.id})}" class="btn btn-sm btn-outline-secondary" target="_blank">View Barcode</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
