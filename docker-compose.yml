@@ -34,6 +34,7 @@ services:
 
     depends_on:
       - web
+      - phpmyadmin
 
   mysql:
     image: mysql:8
@@ -46,3 +47,20 @@ services:
 
     ports:
       - "3309:3306"
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin
+
+    environment:
+      PMA_HOST: mysql-db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: Hello@123
+      UPLOAD_LIMIT: 64M
+
+    ports:
+      - "8083:80"
+
+    depends_on:
+      - mysql
