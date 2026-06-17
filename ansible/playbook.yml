@@ -1,0 +1,2 @@
+[webserver]
+localhost ansible_connection=docker ansible_docker_container=web-server
