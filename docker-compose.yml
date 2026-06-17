@@ -7,7 +7,8 @@ services:
     container_name: web-server
 
     ports:
-      - "2222:22"
+      - "8443:8082"   # Website (NGINX proxy)
+      - "2222:22"     # SSH
 
     environment:
       MYSQL_HOST: mysql
@@ -28,68 +29,55 @@ services:
     command: >
       bash -c "
       apt update &&
-      apt install -y git openssh-server wget curl gnupg &&
+      apt install -y git openssh-server wget curl gnupg nginx openjdk-21-jdk maven &&
 
-      # Install JDK 21
-      apt install -y openjdk-21-jdk &&
-      java -version &&
-
-      # Install Maven
-      apt install -y maven &&
-      mvn -version &&
-
-      # Install NGINX
-      apt install -y nginx &&
+      # Configure NGINX
+      rm -f /etc/nginx/sites-enabled/default &&
       mkdir -p /etc/nginx/conf.d &&
-      cp /etc/nginx/conf.d/default.conf /etc/nginx/sites-enabled/default 2>/dev/null || true &&
+      echo 'server {
+          listen 8080;
+          location / {
+              proxy_pass http://127.0.0.1:8082;
+              proxy_set_header Host \$host;
+              proxy_set_header X-Real-IP \$remote_addr;
+          }
+          client_max_body_size 10M;
+      }' > /etc/nginx/conf.d/default.conf &&
 
       # Configure SSH
       mkdir /var/run/sshd &&
       echo 'root:mle123960' | chpasswd &&
       sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config &&
-      sed -i 's/#Port 22/Port 22/' /etc/ssh/sshd_config &&
 
       # Clone the project
       cd /opt &&
       if [ -d \"DevOp_Final-Exam\" ]; then
         cd DevOp_Final-Exam && git pull
       else
-        git clone https://github.com/Houysang/DevOp_Final-Exam.git &&
+        git clone https://github.com/Houysang/DevOp_Final-Exam.git
         cd DevOp_Final-Exam
       fi &&
 
-      # Build and run the Spring Boot app
+      # Build the Spring Boot app
       cd /opt/DevOp_Final-Exam/demo &&
       mvn clean package -DskipTests -q &&
+      echo 'Build complete' &&
 
-      # Start SSH
+      # Start SSH daemon
       /usr/sbin/sshd &&
+      echo 'SSH started on port 22 -> mapped to 2222' &&
 
       # Start NGINX
       nginx -g 'daemon off;' &
-      echo 'NGINX started on port 8080, proxying to Spring Boot on 8082' &&
+      echo 'NGINX started on port 8080 -> mapped to 8443' &&
 
-      # Run Spring Boot app
-      echo 'Starting Spring Boot application...' &&
+      # Start Spring Boot
       java -jar target/demo-0.0.1-SNAPSHOT.jar --server.port=8082 &
       echo 'Spring Boot started on port 8082' &&
 
-      # Keep container running
+      # Keep container alive
       tail -f /dev/null
       "
-
-  nginx:
-    image: nginx:latest
-    container_name: nginx-proxy
-
-    ports:
-      - "8443:8080"
-
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-
-    depends_on:
-      - web
 
   mysql:
     image: mysql:8.0
@@ -106,7 +94,7 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pHello@123"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
     volumes:
       - mysql-data:/var/lib/mysql
