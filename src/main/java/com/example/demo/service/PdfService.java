@@ -1,7 +1,6 @@
 package com.example.demo.service;
 
 import com.example.demo.model.Profile;
-import com.example.demo.model.Template;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import com.itextpdf.text.Image;
@@ -14,60 +13,59 @@ import java.util.List;
 @Service
 public class PdfService {
 
-    private static final float CARD_WIDTH = 340f;
-    private static final float CARD_HEIGHT = 220f;
+    private static final float CARD_WIDTH = 420f;
+    private static final float CARD_HEIGHT = 280f;
 
     /**
-     * Generate a single ID card PDF for a profile
+     * Generate a simple ID card PDF (photo in center, details below)
      */
     public byte[] generateIdCardPdf(Profile profile) throws DocumentException, IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        Document document = new Document(new Rectangle(CARD_WIDTH, CARD_HEIGHT), 10, 10, 10, 10);
+        Document document = new Document(new Rectangle(CARD_WIDTH, CARD_HEIGHT), 15, 15, 15, 15);
 
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
 
-            // Draw card background
-            PdfContentByte canvas = writer.getDirectContent();
-            drawCardBackground(canvas);
+            PdfContentByte canvas = writer.getDirectContentUnder();
+            drawCardBackground(canvas, CARD_WIDTH, CARD_HEIGHT);
 
-            // Add photo if available
-            if (profile.getPhoto() != null && profile.getPhoto().length > 0) {
-                addPhotoToPdf(document, profile.getPhoto(), 15, 40, 80, 100);
-            }
-
-            // Add text details
-            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, BaseColor.DARK_GRAY);
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, new BaseColor(0x2c, 0x3e, 0x50));
+            Font subtitleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, new BaseColor(0x1a, 0x73, 0xe8));
             Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, BaseColor.GRAY);
             Font valueFont = FontFactory.getFont(FontFactory.HELVETICA, 9, BaseColor.BLACK);
 
-            // Institution header
             Paragraph header = new Paragraph("ID CARD", titleFont);
             header.setAlignment(Element.ALIGN_CENTER);
             document.add(header);
+            document.add(new Paragraph(" ", FontFactory.getFont(FontFactory.HELVETICA, 4)));
 
-            document.add(new Paragraph(" ")); // spacer
-
-            // Profile type
-            Paragraph typeLabel = new Paragraph("TYPE: " + profile.getProfileType().toString(), FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.DARK_GRAY));
+            Paragraph typeLabel = new Paragraph(profile.getProfileType().toString(), subtitleFont);
             typeLabel.setAlignment(Element.ALIGN_CENTER);
             document.add(typeLabel);
+            document.add(new Paragraph(" ", FontFactory.getFont(FontFactory.HELVETICA, 8)));
 
-            document.add(new Paragraph(" ")); // spacer
+            // Photo in CENTER
+            if (profile.getPhoto() != null && profile.getPhoto().length > 0) {
+                try {
+                    Image img = Image.getInstance(profile.getPhoto());
+                    img.scaleToFit(80, 100);
+                    img.setAbsolutePosition(170, 55);
+                    writer.getDirectContent().addImage(img, true);
+                } catch (Exception e) {
+                    // skip photo on error
+                }
+            }
 
-            // Details
-            float textStartX = 105f;
-            addCardDetail(document, "Name:", profile.getFullName(), 10, labelFont, valueFont);
-            document.add(new Chunk(" "));
-            addCardDetail(document, "ID:", profile.getUniqueId(), 10, labelFont, valueFont);
-            document.add(new Chunk(" "));
-            addCardDetail(document, "Dept:", profile.getDepartment() != null ? profile.getDepartment() : "N/A", 10, labelFont, valueFont);
-            document.add(new Chunk(" "));
-            addCardDetail(document, "Position:", profile.getPosition() != null ? profile.getPosition() : "N/A", 10, labelFont, valueFont);
+            // Details below photo
+            addCardDetail(document, "Name:", profile.getFullName(), 15, labelFont, valueFont);
+            addCardDetail(document, "ID:", profile.getUniqueId(), 15, labelFont, valueFont);
+            addCardDetail(document, "Department:", profile.getDepartment() != null ? profile.getDepartment() : "N/A", 15, labelFont, valueFont);
+            addCardDetail(document, "Position:", profile.getPosition() != null ? profile.getPosition() : "N/A", 15, labelFont, valueFont);
+            addCardDetail(document, "Email:", profile.getEmail() != null ? profile.getEmail() : "N/A", 15, labelFont, valueFont);
 
             document.close();
-        } catch (DocumentException | IOException e) {
+        } catch (DocumentException e) {
             throw e;
         }
 
@@ -75,70 +73,87 @@ public class PdfService {
     }
 
     /**
-     * Generate a single ID card PDF with QR code
+     * Generate PDF with QR code (photo center, QR right, barcode bottom)
      */
     public byte[] generateIdCardPdfWithQR(Profile profile, byte[] qrCodeImage, byte[] barcodeImage)
             throws DocumentException, IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        Document document = new Document(new Rectangle(CARD_WIDTH + 100, CARD_HEIGHT + 50), 10, 10, 10, 10);
+        Document document = new Document(new Rectangle(500, 320), 10, 10, 10, 10);
 
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
 
-            PdfContentByte canvas = writer.getDirectContent();
-            drawCardBackground(canvas);
+            float docWidth = 500f;
+            float docHeight = 320f;
 
-            // Title
-            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, BaseColor.DARK_GRAY);
+            PdfContentByte bgCanvas = writer.getDirectContentUnder();
+            drawCardBackground(bgCanvas, docWidth, docHeight);
+
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, new BaseColor(0x2c, 0x3e, 0x50));
+            Font subtitleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, new BaseColor(0x1a, 0x73, 0xe8));
+            Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, BaseColor.GRAY);
+            Font valueFont = FontFactory.getFont(FontFactory.HELVETICA, 10, BaseColor.BLACK);
+
+            Paragraph spacer = new Paragraph(" ", FontFactory.getFont(FontFactory.HELVETICA, 6));
+
             Paragraph title = new Paragraph("OFFICIAL ID CARD", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
             document.add(title);
+            document.add(spacer);
 
-            document.add(new Paragraph(" "));
-
-            // Profile type
-            Paragraph typeLabel = new Paragraph(profile.getProfileType().toString(),
-                    FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, new BaseColor(0, 102, 204)));
+            Paragraph typeLabel = new Paragraph(profile.getProfileType().toString(), subtitleFont);
             typeLabel.setAlignment(Element.ALIGN_CENTER);
             document.add(typeLabel);
+            document.add(spacer);
 
-            document.add(new Paragraph(" "));
-
-            // Photo
+            // Photo in CENTER
             if (profile.getPhoto() != null && profile.getPhoto().length > 0) {
-                addPhotoToPdf(document, profile.getPhoto(), 15, 95, 90, 110);
+                try {
+                    Image img = Image.getInstance(profile.getPhoto());
+                    img.scaleToFit(90, 110);
+                    img.setAbsolutePosition(205, 60);
+                    writer.getDirectContent().addImage(img, true);
+                } catch (Exception e) {
+                    // skip photo on error
+                }
             }
 
-            // Details
-            Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.GRAY);
-            Font valueFont = FontFactory.getFont(FontFactory.HELVETICA, 11, BaseColor.BLACK);
+            // Details below photo
+            addCardDetail(document, "Full Name:", profile.getFullName(), 15, labelFont, valueFont);
+            addCardDetail(document, "Unique ID:", profile.getUniqueId(), 15, labelFont, valueFont);
+            addCardDetail(document, "Department:", profile.getDepartment() != null ? profile.getDepartment() : "N/A", 15, labelFont, valueFont);
+            addCardDetail(document, "Position:", profile.getPosition() != null ? profile.getPosition() : "N/A", 15, labelFont, valueFont);
+            addCardDetail(document, "Date of Birth:", profile.getDateOfBirth() != null ? profile.getDateOfBirth().toString() : "N/A", 15, labelFont, valueFont);
 
-            addCardDetail(document, "Full Name:", profile.getFullName(), 115, labelFont, valueFont);
-            addCardDetail(document, "Unique ID:", profile.getUniqueId(), 115, labelFont, valueFont);
-            addCardDetail(document, "Department:", profile.getDepartment() != null ? profile.getDepartment() : "N/A", 115, labelFont, valueFont);
-            addCardDetail(document, "Position:", profile.getPosition() != null ? profile.getPosition() : "N/A", 115, labelFont, valueFont);
+            document.add(spacer);
 
-            document.add(new Paragraph(" "));
-
-            // QR Code
+            // QR Code on RIGHT side
             if (qrCodeImage != null && qrCodeImage.length > 0) {
-                Image qrImg = Image.getInstance(qrCodeImage);
-                qrImg.scaleToFit(80, 80);
-                qrImg.setAbsolutePosition(15, 15);
-                document.add(qrImg);
+                try {
+                    Image qrImg = Image.getInstance(qrCodeImage);
+                    qrImg.scaleToFit(65, 65);
+                    qrImg.setAbsolutePosition(395, 10);
+                    writer.getDirectContent().addImage(qrImg, true);
+                } catch (Exception e) {
+                    // skip qr on error
+                }
             }
 
-            // Barcode
+            // Barcode at bottom center
             if (barcodeImage != null && barcodeImage.length > 0) {
-                Image barcodeImg = Image.getInstance(barcodeImage);
-                barcodeImg.scaleToFit(150, 40);
-                barcodeImg.setAbsolutePosition(120, 30);
-                document.add(barcodeImg);
+                try {
+                    Image barcodeImg = Image.getInstance(barcodeImage);
+                    barcodeImg.scaleToFit(140, 30);
+                    barcodeImg.setAbsolutePosition(180, 18);
+                    writer.getDirectContent().addImage(barcodeImg, true);
+                } catch (Exception e) {
+                    // skip barcode on error
+                }
             }
 
             document.close();
-        } catch (DocumentException | IOException e) {
+        } catch (DocumentException e) {
             throw e;
         }
 
@@ -163,99 +178,82 @@ public class PdfService {
             document.add(mainTitle);
             document.add(new Paragraph(" "));
 
+            Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.GRAY);
+            Font valueFont = FontFactory.getFont(FontFactory.HELVETICA, 11, BaseColor.BLACK);
+
             for (int i = 0; i < profiles.size(); i++) {
                 Profile profile = profiles.get(i);
 
-                // Add a new page for each card (except first)
                 if (i > 0) {
                     document.newPage();
                 }
 
-                drawCardBackground(writer.getDirectContent());
-
-                // Title
                 Paragraph title = new Paragraph("ID CARD - " + profile.getProfileType().toString(),
                         FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, BaseColor.DARK_GRAY));
                 title.setAlignment(Element.ALIGN_CENTER);
                 document.add(title);
                 document.add(new Paragraph(" "));
 
-                // Photo
+                // Photo in CENTER
                 if (profile.getPhoto() != null && profile.getPhoto().length > 0) {
-                    addPhotoToPdf(document, profile.getPhoto(), 20, 120, 90, 110);
+                    try {
+                        Image img = Image.getInstance(profile.getPhoto());
+                        img.scaleToFit(90, 110);
+                        img.setAbsolutePosition(205, 120);
+                        writer.getDirectContent().addImage(img, true);
+                    } catch (Exception e) {
+                        // skip photo on error
+                    }
                 }
 
-                // Details
-                Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.GRAY);
-                Font valueFont = FontFactory.getFont(FontFactory.HELVETICA, 11, BaseColor.BLACK);
+                // Details below photo
+                addCardDetail(document, "Name:", profile.getFullName(), 15, labelFont, valueFont);
+                addCardDetail(document, "ID:", profile.getUniqueId(), 15, labelFont, valueFont);
+                addCardDetail(document, "Dept:", profile.getDepartment(), 15, labelFont, valueFont);
+                addCardDetail(document, "Position:", profile.getPosition(), 15, labelFont, valueFont);
 
-                addCardDetail(document, "Name:", profile.getFullName(), 130, labelFont, valueFont);
-                addCardDetail(document, "ID:", profile.getUniqueId(), 130, labelFont, valueFont);
-                addCardDetail(document, "Dept:", profile.getDepartment(), 130, labelFont, valueFont);
-                addCardDetail(document, "Position:", profile.getPosition(), 130, labelFont, valueFont);
-
-                // QR Code
+                // QR Code on RIGHT side
                 if (qrCodes != null && i < qrCodes.length && qrCodes[i] != null) {
-                    Image qrImg = Image.getInstance(qrCodes[i]);
-                    qrImg.scaleToFit(70, 70);
-                    qrImg.setAbsolutePosition(20, 20);
-                    document.add(qrImg);
+                    try {
+                        Image qrImg = Image.getInstance(qrCodes[i]);
+                        qrImg.scaleToFit(70, 70);
+                        qrImg.setAbsolutePosition(430, 20);
+                        writer.getDirectContent().addImage(qrImg, true);
+                    } catch (Exception e) {
+                        // skip qr on error
+                    }
                 }
 
-                // Barcode
+                // Barcode at bottom left
                 if (barcodes != null && i < barcodes.length && barcodes[i] != null) {
-                    Image barcodeImg = Image.getInstance(barcodes[i]);
-                    barcodeImg.scaleToFit(130, 35);
-                    barcodeImg.setAbsolutePosition(120, 35);
-                    document.add(barcodeImg);
+                    try {
+                        Image barcodeImg = Image.getInstance(barcodes[i]);
+                        barcodeImg.scaleToFit(130, 35);
+                        barcodeImg.setAbsolutePosition(20, 20);
+                        writer.getDirectContent().addImage(barcodeImg, true);
+                    } catch (Exception e) {
+                        // skip barcode on error
+                    }
                 }
             }
 
             document.close();
-        } catch (DocumentException | IOException e) {
+        } catch (DocumentException e) {
             throw e;
         }
 
         return baos.toByteArray();
     }
 
-    private void drawCardBackground(PdfContentByte canvas) {
-        // Simple white background with border
-        canvas.setColorStroke(BaseColor.LIGHT_GRAY);
-        canvas.setColorFill(BaseColor.WHITE);
-        canvas.roundRectangle(5, 5, CARD_WIDTH - 10, CARD_HEIGHT - 10, 10);
-        canvas.fillStroke();
-    }
+    private void drawCardBackground(PdfContentByte canvas, float width, float height) {
+        canvas.setColorFill(new BaseColor(0xF8, 0xF9, 0xFA));
+        canvas.roundRectangle(3, 3, width - 6, height - 6, 8);
+        canvas.fill();
 
-    private void addPhotoToPdf(Document document, byte[] photoBytes, float x, float y, float width, float height)
-            throws DocumentException, IOException {
-        try {
-            Image img = Image.getInstance(photoBytes);
-            img.scaleToFit(width, height);
-            img.setAbsolutePosition(x, y);
-            document.add(img);
-        } catch (Exception e) {
-            // If photo can't be added, skip it
-        }
-    }
-
-    private void addCardDetail(Document document, String label, String value, float textX,
-                                Font labelFont, Font valueFont) throws DocumentException {
-        PdfPTable table = new PdfPTable(2);
-        table.setWidthPercentage(60);
-        table.setWidths(new float[]{30, 70});
-
-        PdfPCell labelCell = new PdfPCell(new Phrase(label, labelFont));
-        labelCell.setBorder(Rectangle.NO_BORDER);
-        labelCell.setPadding(2);
-        table.addCell(labelCell);
-
-        PdfPCell valueCell = new PdfPCell(new Phrase(value != null ? value : "N/A", valueFont));
-        valueCell.setBorder(Rectangle.NO_BORDER);
-        valueCell.setPadding(2);
-        table.addCell(valueCell);
-
-        document.add(table);
+        canvas.setColorStroke(new BaseColor(0xDE, 0xE2, 0xE6));
+        canvas.setLineWidth(1f);
+        canvas.roundRectangle(3, 3, width - 6, height - 6, 8);
+        canvas.stroke();
     }
 
     private void addCardDetail(Document document, String label, String value, int indent,

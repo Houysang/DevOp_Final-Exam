@@ -185,7 +185,7 @@ class DemoApplicationTests {
 				.htmlContent("<div>ID Card Content</div>")
 				.cssContent("body { font-family: Arial; }")
 				.profileType(ProfileType.STUDENT)
-				.isDefault(true)
+				.defaultTemplate(true)
 				.build();
 
 		Template saved = templateRepository.save(template);
@@ -229,18 +229,18 @@ class DemoApplicationTests {
 		Template template1 = Template.builder()
 				.name("Template 1")
 				.htmlContent("<div>1</div>")
-				.isDefault(false)
+				.defaultTemplate(false)
 				.build();
 		templateRepository.save(template1);
 
 		Template defaultTemplate = Template.builder()
 				.name("Default")
 				.htmlContent("<div>Default</div>")
-				.isDefault(true)
+				.defaultTemplate(true)
 				.build();
 		templateRepository.save(defaultTemplate);
 
-		Template found = templateRepository.findByIsDefaultTrue().orElse(null);
+		Template found = templateRepository.findByDefaultTemplateTrue().orElse(null);
 		assertNotNull(found);
 		assertEquals("Default", found.getName());
 	}
@@ -338,24 +338,24 @@ class DemoApplicationTests {
 		Template template1 = Template.builder()
 				.name("Template 1")
 				.htmlContent("<div>1</div>")
-				.isDefault(false)
+				.defaultTemplate(false)
 				.build();
 		Template saved1 = templateRepository.save(template1);
 
 		Template template2 = Template.builder()
 				.name("Template 2")
 				.htmlContent("<div>2</div>")
-				.isDefault(false)
+				.defaultTemplate(false)
 				.build();
 		Template saved2 = templateRepository.save(template2);
 
 		templateService.setDefaultTemplate(saved1.getId());
-		assertTrue(templateRepository.findById(saved1.getId()).get().isDefault());
-		assertFalse(templateRepository.findById(saved2.getId()).get().isDefault());
+		assertTrue(templateRepository.findById(saved1.getId()).get().isDefaultTemplate());
+		assertFalse(templateRepository.findById(saved2.getId()).get().isDefaultTemplate());
 
 		templateService.setDefaultTemplate(saved2.getId());
-		assertFalse(templateRepository.findById(saved1.getId()).get().isDefault());
-		assertTrue(templateRepository.findById(saved2.getId()).get().isDefault());
+		assertFalse(templateRepository.findById(saved1.getId()).get().isDefaultTemplate());
+		assertTrue(templateRepository.findById(saved2.getId()).get().isDefaultTemplate());
 	}
 
 	// ========== QR CODE / BARCODE SERVICE TESTS ==========

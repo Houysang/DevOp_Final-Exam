@@ -25,6 +25,8 @@
             </div>
             <ul class="nav flex-column">
                 <li class="nav-item"><a class="nav-link" th:href="@{/api/profiles/view/all}"><i class="bi bi-people"></i> All Profiles</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/api/profiles/view/create}"><i class="bi bi-person-plus"></i> Create Profile</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/api/profiles/view/batch}"><i class="bi bi-files"></i> Batch Create</a></li>
                 <li class="nav-item"><a class="nav-link" th:href="@{/api/templates/view/all}"><i class="bi bi-layout-text-window"></i> Templates</a></li>
                 <li class="nav-item"><a class="nav-link" th:href="@{/api/templates/view/create}"><i class="bi bi-plus-square"></i> New Template</a></li>
             </ul>
@@ -64,7 +66,7 @@
                             </div>
                             <div class="col-12">
                                 <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" th:field="*{isDefault}">
+                                    <input type="checkbox" class="form-check-input" th:field="*{defaultTemplate}">
                                     <label class="form-check-label">Set as Default Template</label>
                                 </div>
                             </div>

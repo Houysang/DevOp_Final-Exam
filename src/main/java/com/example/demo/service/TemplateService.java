@@ -30,7 +30,7 @@ public class TemplateService {
         template.setDescription(templateDetails.getDescription());
         template.setHtmlContent(templateDetails.getHtmlContent());
         template.setCssContent(templateDetails.getCssContent());
-        template.setDefault(templateDetails.isDefault());
+        template.setDefaultTemplate(templateDetails.isDefaultTemplate());
         template.setProfileType(templateDetails.getProfileType());
 
         return templateRepository.save(template);
@@ -65,20 +65,20 @@ public class TemplateService {
     }
 
     public Optional<Template> getDefaultTemplate() {
-        return templateRepository.findByIsDefaultTrue();
+        return templateRepository.findByDefaultTemplateTrue();
     }
 
     @Transactional
     public void setDefaultTemplate(Long id) {
         // Remove default from all templates
         List<Template> allTemplates = templateRepository.findAll();
-        allTemplates.forEach(t -> t.setDefault(false));
+        allTemplates.forEach(t -> t.setDefaultTemplate(false));
         templateRepository.saveAll(allTemplates);
 
         // Set the new default
         Template template = templateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Template not found with id: " + id));
-        template.setDefault(true);
+        template.setDefaultTemplate(true);
         templateRepository.save(template);
     }
 }

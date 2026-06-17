@@ -27,6 +27,7 @@
             <ul class="nav flex-column">
                 <li class="nav-item"><a class="nav-link" th:href="@{/api/profiles/view/all}"><i class="bi bi-people"></i> All Profiles</a></li>
                 <li class="nav-item"><a class="nav-link" th:href="@{/api/profiles/view/create}"><i class="bi bi-person-plus"></i> Create Profile</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/api/profiles/view/batch}"><i class="bi bi-files"></i> Batch Create</a></li>
                 <li class="nav-item"><a class="nav-link active" th:href="@{/api/templates/view/all}"><i class="bi bi-layout-text-window"></i> Templates</a></li>
                 <li class="nav-item"><a class="nav-link" th:href="@{/api/templates/view/create}"><i class="bi bi-plus-square"></i> New Template</a></li>
             </ul>
@@ -58,8 +59,8 @@
                                     <td th:text="${template.description} ?: 'N/A'"></td>
                                     <td><span class="badge bg-secondary" th:text="${template.profileType} ?: 'All'"></span></td>
                                     <td>
-                                        <span th:if="${template.isDefault}" class="badge bg-success">Default</span>
-                                        <span th:unless="${template.isDefault}" class="badge bg-light text-muted">No</span>
+                                        <span th:if="${template.defaultTemplate}" class="badge bg-success">Default</span>
+                                        <span th:unless="${template.defaultTemplate}" class="badge bg-light text-muted">No</span>
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">

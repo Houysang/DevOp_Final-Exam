@@ -36,7 +36,7 @@ public class Template {
     private String cssContent;
 
     @Column(name = "is_default")
-    private boolean isDefault;
+    private boolean defaultTemplate;
 
     @Enumerated(EnumType.STRING)
     private ProfileType profileType;

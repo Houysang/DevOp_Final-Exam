@@ -17,7 +17,7 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
 
     List<Template> findByProfileType(ProfileType profileType);
 
-    Optional<Template> findByIsDefaultTrue();
+    Optional<Template> findByDefaultTemplateTrue();
 
     List<Template> findByNameContainingIgnoreCase(String name);
 
