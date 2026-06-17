@@ -30,3 +30,27 @@ jobs:
       # 4. Run tests
       - name: Run tests
         run: mvn test
+
+       # ---------------- EMAIL ON FAILURE ----------------
+      - name: Send email on failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "❌ CI Build Failed - ${{ github.repository }}"
+          to: srengty@gmail.com, ${{ github.actor }}
+          from: GitHub Actions CI
+          body: |
+            ❌ Build Failed!
+
+            Repository: ${{ github.houysang }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+
+            Author: ${{ github.actor }}
+
+            Check details:
+            ${{ github.server_url }}/${{ github.repository }}/actions
